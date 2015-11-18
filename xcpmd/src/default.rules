@@ -1,0 +1,15 @@
+# Default set of rules for XCPMD. These are only loaded when no rules or vars
+# exist in the DB.
+
+# Variable section
+battCritical(10)
+criticalBrightness(60)
+brightnessOnBatt(75)
+=
+
+# Rules section
+lidScreenPower | whileLidClosed() | screenOff() | screenOn()
+dimScreenCritical | whileUsingBatt() whileOverallBattLessThan($battCritical) | setBacklight($criticalBrightness) | setBacklight($brightnessOnBatt)
+dimScreenOnBatt | whileUsingBatt() | setBacklight($brightnessOnBatt) | setBacklight(100)
+brightnessUpKey | onBacklightUpBtn() | increaseBacklight(7)
+brightnessDownKey | onBacklightDownBtn() | decreaseBacklight(7)

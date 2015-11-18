@@ -75,6 +75,10 @@ AM_CFLAGS=-g -W -Wall -Werror -Wno-unused -std=gnu99
 bindir="/usr/share/xcpmd"
 dist_config_SCRIPTS = screen_on.sh screen_off.sh
 
+# Package up default rules.
+configdir="/usr/share/xcpmd"
+dist_config_DATA = default.rules
+
 # Discard the .la files libtool produces.
 install-exec-hook:
 	rm $(DESTDIR)$(libdir)/$(PACKAGE)/*.la

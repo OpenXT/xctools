@@ -272,8 +272,9 @@ extern uint32_t pm_specs;
 #define DB_VAR_MAP_PATH                     "/power-management/vars"
 #define DB_RULE_PATH                        "/power-management/rules"
 
+#define POLICY_FILE_PATH                    "/usr/share/xcpmd/default.rules"
 #define SCREEN_ON_SCRIPT                    "/usr/share/xcpmd/screen_on.sh"
-#define SCREEN_OFF_SCRIPT                    "/usr/share/xcpmd/screen_off.sh"
+#define SCREEN_OFF_SCRIPT                   "/usr/share/xcpmd/screen_off.sh"
 
 #endif /* __XCPMD_H__ */
 
