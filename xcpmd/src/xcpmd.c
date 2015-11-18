@@ -43,6 +43,20 @@ static char rcsid[] = "$Id:$";
 #include "xcpmd.h"
 #include "modules.h"
 #include "rules.h"
+#include <signal.h>
+
+
+//Automatically reap zombie processes without processing return values.
+void ignore_children(void) {
+
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGCHLD, &sa, 0) == -1) {
+        xcpmd_log(LOG_WARNING, "Failed to register handler for SIGCHLD--zombie processes may accumulate.\n");
+    }
+}
 
 
 int main(int argc, char *argv[]) {
@@ -84,6 +98,10 @@ int main(int argc, char *argv[]) {
         xcpmd_log(LOG_ERR, "Failed to initialize ACPI events monitor\n");
         goto xcpmd_err;
     }
+
+    //Set up a default SIGCHLD handler--this may be overridden by any modules loaded.
+    xcpmd_log(LOG_INFO, "Registering SIGCHLD handler.");
+    ignore_children();
 
     // Load modules
     xcpmd_log(LOG_INFO, "Loading modules.\n");
