@@ -253,7 +253,7 @@ struct battery_status {
 #define PM_QUIRK_SW_ASSIST_BCL              0x0000001 /* platform needs SW assistance with brightness adjustments */
 #define PM_QUIRK_SW_ASSIST_BCL_IGFX_PT      0x0000002 /* platform needs SW assistance with brightness adjustments with Intel GPU pass-through */
 #define PM_QUIRK_SW_ASSIST_BCL_HP_SB        0x0000004 /* set of HP SB platforms need SW assistance due to BIOS not switching to OpRegion use */
-#define PM_QUIRK_HP_HOTKEY_INPUT            0x0010000 /* HP platforms generate keyboard input for hotkeys */
+#define PM_QUIRK_HOTKEY_INPUT               0x0010000 /* Some platforms generate keyboard input for hotkeys */
 
 extern uint32_t pm_quirks;
 

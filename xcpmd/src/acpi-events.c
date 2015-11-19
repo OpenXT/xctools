@@ -542,11 +542,14 @@ int xcpmd_process_input(int input_value) {
         case XCPMD_INPUT_SLEEP:
             handle_sleep_button_event();
             break;
+        /* HP laptops and a few Dells use input events for brightness */
         case XCPMD_INPUT_BRIGHTNESSUP:
+            if (pm_quirks & PM_QUIRK_HOTKEY_INPUT)
+                handle_bcl_event(BCL_UP);
+            break;
         case XCPMD_INPUT_BRIGHTNESSDOWN:
-            /* Only HP laptops use input events for brightness */
-            if (pm_quirks & PM_QUIRK_HP_HOTKEY_INPUT)
-                handle_bcl_event(input_value == XCPMD_INPUT_BRIGHTNESSUP ? BCL_UP : BCL_DOWN);
+            if (pm_quirks & PM_QUIRK_HOTKEY_INPUT)
+                handle_bcl_event(BCL_DOWN);
             break;
         default:
             xcpmd_log(LOG_WARNING, "Input invalid value %d\n", input_value);
