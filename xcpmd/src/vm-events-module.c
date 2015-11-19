@@ -367,7 +367,11 @@ void vm_state_changed(DBusMessage * dbus_message) {
 	struct vm_identifier_table_row * vmid;
 
 
-    dbus_message_get_args(dbus_message, &error, DBUS_TYPE_STRING, &vm_uuid, DBUS_TYPE_OBJECT_PATH, &obj_path, DBUS_TYPE_STRING, &vm_state, DBUS_TYPE_INT32, &acpi_state);
+    if (!dbus_message_get_args(dbus_message, &error, DBUS_TYPE_STRING, &vm_uuid, DBUS_TYPE_OBJECT_PATH, &obj_path, DBUS_TYPE_STRING, &vm_state, DBUS_TYPE_INT32, &acpi_state)) {
+        xcpmd_log(LOG_WARNING, "DBus error in com.citrix.xenclient.xenmgr.vm_state_changed: %s\n", error.message); 
+        dbus_error_free(&error);
+        return;
+    }
 
     //For whatever reason the "creating" signal is fired multiple times, but
     //only once does it have the acpi_state of 5. At present, the acpi_state is
