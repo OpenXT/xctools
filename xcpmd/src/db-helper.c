@@ -330,7 +330,7 @@ bool parse_db_rules(struct parse_data * data) {
         conditions = rule_arr[1];
         actions = rule_arr[2];
         undos = rule_arr[3];
-
+    
         if (!parse_rule_persistent(data, name, conditions, actions, undos)) {
             xcpmd_log(LOG_WARNING, "Error reading DB rule %s - %s", rule_name, extract_parse_error(data));
         }
@@ -458,7 +458,7 @@ static char ** json_rule_to_parseable(char * name, char * json) {
         //Get its arguments, if it has any.
         yajl_path[0] = "args";
         yargs = yajl_tree_get(ycond, yajl_path, yajl_t_any);
-        if ((YAJL_IS_STRING(yargs) && *(YAJL_GET_STRING(yargs))) == '\0') {
+        if ((YAJL_IS_STRING(yargs) && (*(YAJL_GET_STRING(yargs))) == '\0')) {
             //Having no arguments is fine
         }
         else if (!YAJL_IS_OBJECT(yargs)) {
@@ -522,7 +522,7 @@ static char ** json_rule_to_parseable(char * name, char * json) {
         //Get its args, if it has any.
         yajl_path[0] = "args";
         yargs = yajl_tree_get(yact, yajl_path, yajl_t_any);
-        if (YAJL_IS_STRING(yargs) && *(YAJL_GET_STRING(yargs)) == '\0') {
+        if ((YAJL_IS_STRING(yargs) && (*(YAJL_GET_STRING(yargs))) == '\0')) {
             //Having no args is fine.
         }
         else if (!YAJL_IS_OBJECT(yargs)) {
@@ -587,7 +587,7 @@ static char ** json_rule_to_parseable(char * name, char * json) {
 
             yajl_path[0] = "args";
             yargs = yajl_tree_get(yundo, yajl_path, yajl_t_any);
-            if (YAJL_IS_STRING(yargs) && *(YAJL_GET_STRING(yargs)) == '\0') {
+            if ((YAJL_IS_STRING(yargs) && (*(YAJL_GET_STRING(yargs))) == '\0')) {
                 //Having no args is fine.
             }
             else if (!YAJL_IS_OBJECT(yargs)) {
