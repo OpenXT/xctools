@@ -189,6 +189,7 @@ struct battery_status {
 #define LID_DIR_PATH2                       "/proc/acpi/button/lid/LID0"
 #define LID_STATE_FILE_PATH                 LID_DIR_PATH"/state"
 #define LID_STATE_FILE_PATH2                LID_DIR_PATH2"/state"
+#define BACKLIGHT_PATH                      "/sys/class/backlight"
 #define ACPID_SOCKET_PATH                   "/var/run/acpid.socket"
 
 #define XS_FORMAT_PATH_LEN                  128
@@ -252,7 +253,7 @@ struct battery_status {
 #define PM_QUIRK_SW_ASSIST_BCL              0x0000001 /* platform needs SW assistance with brightness adjustments */
 #define PM_QUIRK_SW_ASSIST_BCL_IGFX_PT      0x0000002 /* platform needs SW assistance with brightness adjustments with Intel GPU pass-through */
 #define PM_QUIRK_SW_ASSIST_BCL_HP_SB        0x0000004 /* set of HP SB platforms need SW assistance due to BIOS not switching to OpRegion use */
-#define PM_QUIRK_HP_HOTKEY_INPUT            0x0010000 /* HP platforms generate keyboard input for hotkeys */
+#define PM_QUIRK_HOTKEY_INPUT               0x0010000 /* Some platforms generate keyboard input for hotkeys */
 
 extern uint32_t pm_quirks;
 
@@ -270,6 +271,10 @@ extern uint32_t pm_specs;
 #define DB_PM_PATH                          "/power-management"
 #define DB_VAR_MAP_PATH                     "/power-management/vars"
 #define DB_RULE_PATH                        "/power-management/rules"
+
+#define POLICY_FILE_PATH                    "/usr/share/xcpmd/default.rules"
+#define SCREEN_ON_SCRIPT                    "/usr/share/xcpmd/screen_on.sh"
+#define SCREEN_OFF_SCRIPT                   "/usr/share/xcpmd/screen_off.sh"
 
 #endif /* __XCPMD_H__ */
 

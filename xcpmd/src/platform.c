@@ -44,6 +44,8 @@
 #define DELL_E5220               "E5220"
 #define DELL_E5420               "E5420"
 #define DELL_E5520               "E5520"
+#define DELL_E6330               "E6330"
+#define DELL_E6430               "E6430"
 #define TOSHIBA_TECRA            "TECRA"
 
 /* PCI Values */
@@ -56,6 +58,7 @@
 #define MONTEVINA_GMCH_ID        0x2a40
 #define CALPELLA_GMCH_ID         0x0044
 #define SANDYBRIDGE_GMCH_ID      0x0104
+#define IVYBRIDGE_GMCH_ID        0x0154
 
 #define PCI_VENDOR_ID_WORD(v) ((uint16_t)(0xffff & (v)))
 #define PCI_DEVICE_ID_WORD(v) ((uint16_t)(0xffff & (v >> 16)))
@@ -371,7 +374,7 @@ static void setup_software_bcl_and_input_quirks(void)
          * functionality for those keys via WMI. The flag allows the backend to field a few
          * of the hotkey presses when no guests are using them by processing the keyboard (via QLB).
          */
-        pm_quirks |= PM_QUIRK_HP_HOTKEY_INPUT;
+        pm_quirks |= PM_QUIRK_HOTKEY_INPUT;
 
         /* Almost all the HPs used KB input for adjusting the brightness until an HDX VM is run with
          * the QLB/HotKey software. Once this VM is running, the guest software takes over and the BIOS
@@ -391,6 +394,10 @@ static void setup_software_bcl_and_input_quirks(void)
         /* MV and CP systems seem to use firmware BCL control but SB and IB do not */
         if ( (pci_gmch_id == MONTEVINA_GMCH_ID) || (pci_gmch_id == CALPELLA_GMCH_ID) )
             pm_quirks &= ~(PM_QUIRK_SW_ASSIST_BCL|PM_QUIRK_SW_ASSIST_BCL_IGFX_PT);
+
+        /* The E6330 and E6430 send BCL buttons as input events. */
+        if ( strstr(product, DELL_E6330) || strstr(product, DELL_E6430) )
+            pm_quirks |= PM_QUIRK_HOTKEY_INPUT;
     }
     else if ( strnicmp(manufacturer, MANUFACTURER_LENOVO, strlen(MANUFACTURER_LENOVO)) == 0 )
     {

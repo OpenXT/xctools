@@ -47,7 +47,8 @@ static char * _module_list[] = {
     MODULE_PATH "acpi-module.so",
     MODULE_PATH "vm-actions-module.so",
     MODULE_PATH "default-actions-module.so",
-    MODULE_PATH "vm-events-module.so"
+    MODULE_PATH "vm-events-module.so",
+    MODULE_PATH "screen-module.so"
 };
 
 
@@ -305,7 +306,7 @@ int load_policy_from_db() {
 //See parser.c for information on policy file format.
 int load_policy_from_file(char * filename) {
 
-    if (!parse_config_from_file(filename))
+    if (parse_config_from_file(filename) == -1)
         return -1;
 
     write_db_rules();
@@ -314,3 +315,14 @@ int load_policy_from_file(char * filename) {
     return 0;
 }
 
+
+//Checks if any rules or variables have yet been added.
+bool policy_exists(void) {
+
+    if (list_empty(&rules.list) && list_empty(&db_vars.list)) {
+        return false;
+    }
+    else {
+        return true;
+    }
+}

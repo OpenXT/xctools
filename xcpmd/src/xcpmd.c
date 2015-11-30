@@ -43,6 +43,20 @@ static char rcsid[] = "$Id:$";
 #include "xcpmd.h"
 #include "modules.h"
 #include "rules.h"
+#include <signal.h>
+
+
+//Automatically reap zombie processes without processing return values.
+void ignore_children(void) {
+
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    if (sigaction(SIGCHLD, &sa, 0) == -1) {
+        xcpmd_log(LOG_WARNING, "Failed to register handler for SIGCHLD--zombie processes may accumulate.\n");
+    }
+}
 
 
 int main(int argc, char *argv[]) {
@@ -85,6 +99,10 @@ int main(int argc, char *argv[]) {
         goto xcpmd_err;
     }
 
+    //Set up a default SIGCHLD handler--this may be overridden by any modules loaded.
+    xcpmd_log(LOG_INFO, "Registering SIGCHLD handler.");
+    ignore_children();
+
     // Load modules
     xcpmd_log(LOG_INFO, "Loading modules.\n");
     if (init_modules() == -1) {
@@ -103,8 +121,11 @@ int main(int argc, char *argv[]) {
     }
 
 #ifdef POLICY_FILE_PATH
-    if (load_policy_from_file(POLICY_FILE_PATH) == -1) {
-        xcpmd_log(LOG_WARNING, "Error loading policy from file %s; continuing...\n", POLICY_FILE_PATH);
+    if (!policy_exists()) {
+        xcpmd_log(LOG_INFO, "No DB policy found; loading default policy from %s.\n", POLICY_FILE_PATH);
+        if (load_policy_from_file(POLICY_FILE_PATH) == -1) {
+            xcpmd_log(LOG_WARNING, "Error loading policy from file %s; continuing...\n", POLICY_FILE_PATH);
+        }
     }
 #endif
 
