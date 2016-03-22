@@ -42,8 +42,7 @@ struct event refresh_battery_event;
 
 static void cleanup_removed_battery(unsigned int battery_index);
 static DIR * get_battery_dir(unsigned int battery_index);
-static void set_battery_status_attribute(char * attrib_name, char * attrib_value, struct battery_status * status);
-static void set_battery_info_attribute(char *attrib_name, char *attrib_value, struct battery_info *info);
+static void set_battery_attribute(char * attrib_name, char * attrib_value, struct battery_status * status, struct battery_info * info);
 static int get_max_battery_index(void);
 static unsigned long get_total_charge(void);
 static unsigned long get_total_max_charge(void);
@@ -389,7 +388,7 @@ int battery_is_present(unsigned int battery_index) {
 
 
 //Given an attribute name and value, sets the appropriate member of a battery_status struct.
-static void set_battery_status_attribute(char * attrib_name, char * attrib_value, struct battery_status * status) {
+static void set_battery_attribute(char * attrib_name, char * attrib_value, struct battery_status * status, struct battery_info * info) {
 
     if (!strcmp(attrib_name, "status")) {
         //The spec says bit 0 and bit 1 are mutually exclusive
@@ -421,13 +420,7 @@ static void set_battery_status_attribute(char * attrib_name, char * attrib_value
         if (strstr(attrib_value, "1"))
             status->present = YES;
     }
-}
-
-
-//Given an attribute name and value, sets the appropriate member of a battery_info struct.
-static void set_battery_info_attribute(char *attrib_name, char *attrib_value, struct battery_info *info) {
-
-    if (!strcmp(attrib_name, "present")) {
+    else if (!strcmp(attrib_name, "present")) {
         if (strstr(attrib_value, "1"))
             info->present = YES;
     }
@@ -467,8 +460,8 @@ static void set_battery_info_attribute(char *attrib_name, char *attrib_value, st
 }
 
 
-//Gets a battery's status from the sysfs and stores it in last_status.
-int update_battery_status(unsigned int battery_index) {
+//Gets a battery's status/info from the sysfs and stores it in last_status/last_info.
+int update_battery(unsigned int battery_index) {
 
     DIR *battery_dir;
     struct dirent * dp;
@@ -478,7 +471,9 @@ int update_battery_status(unsigned int battery_index) {
     char *ptr;
 
     struct battery_status status;
+    struct battery_info info;
     memset(&status, 0, sizeof(struct battery_status));
+    memset(&info, 0, sizeof(struct battery_info));
 
     if (battery_index >= num_battery_structs_allocd)
         return -1;
@@ -486,6 +481,7 @@ int update_battery_status(unsigned int battery_index) {
     if (battery_slot_exists(battery_index) == NO) {
         status.present = NO;
         memcpy(&last_status[battery_index], &status, sizeof(struct battery_status));
+        memcpy(&last_info[battery_index], &info, sizeof(struct battery_info));
         return 1;
     }
 
@@ -495,6 +491,7 @@ int update_battery_status(unsigned int battery_index) {
         if (errno == ENOENT) {
             status.present = NO;
             memcpy(&last_status[battery_index], &status, sizeof(struct battery_status));
+            memcpy(&last_info[battery_index], &info, sizeof(struct battery_info));
             return 1;
         }
         else {
@@ -527,7 +524,7 @@ int update_battery_status(unsigned int battery_index) {
                 ptr += sizeof(char);
 
             //Set the attribute represented by this file.
-            set_battery_status_attribute(dp->d_name, ptr, &status);
+            set_battery_attribute(dp->d_name, ptr, &status, &info);
         }
     }
 
@@ -544,71 +541,6 @@ int update_battery_status(unsigned int battery_index) {
         // Rate in mW, remaining in mWh
         status.present_rate = status.power_now;
         status.remaining_capacity = status.energy_now;
-    }
-
-    closedir(battery_dir);
-    memcpy(&last_status[battery_index], &status, sizeof(struct battery_status));
-#ifdef XCPMD_DEBUG
-    print_battery_status(battery_index);
-#endif
-    return 1;
-}
-
-
-//Gets a battery's info from the sysfs and stores it in last_info.
-int update_battery_info(unsigned int battery_index) {
-
-    DIR *battery_dir;
-    struct dirent * dp;
-    FILE *file;
-    char filename[256];
-    char data[128];
-    char *ptr;
-
-    struct battery_info info;
-    memset(&info, 0, sizeof(struct battery_info));
-
-    if (battery_index >= num_battery_structs_allocd)
-        return 0;
-
-    if (battery_slot_exists(battery_index) == NO) {
-        memcpy(&last_info[battery_index], &info, sizeof(struct battery_info));
-        return 0;
-    }
-
-    battery_dir = get_battery_dir(battery_index);
-    if (!battery_dir) {
-        xcpmd_log(LOG_ERR, "opendir in update_battery_info() for directory %s/BAT%d failed with error %d\n", BATTERY_DIR_PATH, battery_index, errno);
-        return 0;
-    }
-
-    //Loop over the files in the directory.
-    while ((dp = readdir(battery_dir)) != NULL) {
-
-        //Convert from dirent to file and read out the data.
-        if (dp->d_type == DT_REG) {
-
-            memset(filename, 0, sizeof(filename));
-            snprintf(filename, 255, "%s/BAT%i/%s", BATTERY_DIR_PATH, battery_index, dp->d_name);
-
-            file = fopen(filename, "r");
-            if (file == NULL)
-                continue;
-
-            memset(data, 0, sizeof(data));
-            fgets(data, sizeof(data), file);
-
-            fclose(file);
-
-            //Trim off leading spaces.
-            ptr = data;
-            while(*ptr == ' ')
-                ptr += sizeof(char);
-
-            //Set the attribute represented by this file.
-            set_battery_info_attribute(dp->d_name, ptr, &info);
-
-        }
     }
 
     //In sysfs, the charge nodes are for batteries reporting in mA and
@@ -636,8 +568,11 @@ int update_battery_info(unsigned int battery_index) {
     info.capacity_granularity_2 = 1;
 
     closedir(battery_dir);
+    memcpy(&last_status[battery_index], &status, sizeof(struct battery_status));
     memcpy(&last_info[battery_index], &info, sizeof(struct battery_info));
-
+#ifdef XCPMD_DEBUG
+    print_battery_status(battery_index);
+#endif
     return 1;
 }
 
@@ -817,8 +752,7 @@ void update_batteries(void) {
     //Updating all status/info before writing to the xenstore prevents bad
     //calculations of aggregate data (e.g., warning level).
     for (i=0; i < num_batteries_to_update; ++i) {
-        update_battery_status(i);
-        update_battery_info(i);
+        update_battery(i);
     }
 
     //Write back to the xenstore and only send notifications if things have changed.
