@@ -1,0 +1,22 @@
+# Default set of rules for XCPMD. These are only loaded when no rules or vars
+# exist in the DB.
+
+# Variable section
+battCritical(10)
+criticalBrightness(60)
+brightnessOnBatt(75)
+brightnessOnAc(100)
+
+# Surfman controls the backlight, and it is restricted to 15 brightness steps.
+# The backlight step will effectively be rounded to the nearest surfman step.
+backlightStep(7)
+
+# Section separator
+=
+
+# Rules section
+lidScreenPower | whileLidClosed() | screenOff() | screenOn()
+dimScreenCritical | whileUsingBatt() whileOverallBattLessThan($battCritical) | setBacklight($criticalBrightness) | setBacklight($brightnessOnAc)
+dimScreenOnBatt | whileUsingBatt() | setBacklight($brightnessOnBatt) | setBacklight($brightnessOnAc)
+brightnessUpKey | onBacklightUpBtn() | increaseBacklight($backlightStep)
+brightnessDownKey | onBacklightDownBtn() | decreaseBacklight($backlightStep)
