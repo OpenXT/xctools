@@ -41,7 +41,7 @@ BUILT_SOURCES = ${DBUS_CLIENT_IDLS:%=rpcgen/%_client.h} \
 
 
 # Use libtool to build our .so files.
-pkglib_LTLIBRARIES = default-actions-module.la acpi-module.la vm-actions-module.la default-inputs-module.la vm-events-module.la
+pkglib_LTLIBRARIES = default-actions-module.la acpi-module.la vm-actions-module.la default-inputs-module.la vm-events-module.la screen-module.la
 
 default_inputs_module_la_SOURCES = default-inputs-module.c default-inputs-module.h rules.h
 default_inputs_module_la_LDFLAGS = -avoid-version -module -shared
@@ -58,6 +58,9 @@ vm_actions_module_la_LDFLAGS = -avoid-version -module -shared
 vm_events_module_la_SOURCES = vm-events-module.c project.h xcpmd.h modules.h rules.h vm-events-module.h vm-utils.h
 vm_events_module_la_LDFLAGS = -avoid-version -module -shared
 
+screen_module_la_SOURCES = screen-module.c project.h xcpmd.h rules.h
+screen_module_la_LIBADD = -lm
+screen_module_la_LDFLAGS = -avoid-version -module -shared
 
 
 SRCS=xcpmd.c acpi-events.c platform.c rpcgen/xcpmd_server_obj.c xcpmd-dbus-server.c utils.c rules.c modules.c battery.c parser.c db-helper.c vm-utils.c
@@ -67,6 +70,7 @@ xcpmd_LDFLAGS = -rdynamic
 
 
 AM_CFLAGS=-g -W -Wall -Werror -std=gnu99
+
 
 # Discard the .la files libtool produces.
 install-exec-hook:

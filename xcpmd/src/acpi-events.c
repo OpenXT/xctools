@@ -40,17 +40,6 @@ static struct event acpi_event;
 
 static struct ev_wrapper ** acpi_event_table;
 
-void adjust_brightness(int increase, int force) {
-
-    if ( force || (pm_quirks & PM_QUIRK_SW_ASSIST_BCL) || (pm_quirks & PM_QUIRK_HP_HOTKEY_INPUT)) {
-        if (increase)
-            com_citrix_xenclient_surfman_increase_brightness_(xcdbus_conn, SURFMAN_SERVICE, SURFMAN_PATH);
-        else
-            com_citrix_xenclient_surfman_decrease_brightness_(xcdbus_conn, SURFMAN_SERVICE, SURFMAN_PATH);
-    }
-}
-
-
 int get_ac_adapter_status(void) {
 
     char data[128];
@@ -244,13 +233,11 @@ static void handle_bcl_event(enum BCL_CMD cmd) {
         xcpmd_log(LOG_INFO, "Brightness up button pressed event\n");
         xenstore_write("1", XS_BCL_CMD);
         xenstore_write("1", XS_BCL_EVENT_PATH);
-        adjust_brightness(1, 0);
     }
     else if (cmd == BCL_DOWN) {
         xcpmd_log(LOG_INFO, "Brightness down button pressed event\n");
         xenstore_write("2", XS_BCL_CMD);
         xenstore_write("1", XS_BCL_EVENT_PATH);
-        adjust_brightness(0, 0);
     }
     else if (cmd == BCL_CYCLE) {
         //Qemu doesn't currently support this key, but these can be uncommented

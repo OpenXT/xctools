@@ -178,6 +178,7 @@ struct battery_status {
 #define LID_DIR_PATH2                       "/proc/acpi/button/lid/LID0"
 #define LID_STATE_FILE_PATH                 LID_DIR_PATH"/state"
 #define LID_STATE_FILE_PATH2                LID_DIR_PATH2"/state"
+#define BACKLIGHT_PATH                      "/sys/class/backlight"
 #define ACPID_SOCKET_PATH                   "/var/run/acpid.socket"
 
 #define XS_FORMAT_PATH_LEN                  128
