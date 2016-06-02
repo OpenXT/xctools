@@ -58,7 +58,6 @@ static struct action_table_row action_table[] = {
 };
 
 static unsigned int num_action_types = sizeof(action_table) / sizeof(action_table[0]);
-static int times_loaded = 0;
 
 
 //Registers this module's action types.
@@ -66,9 +65,6 @@ static int times_loaded = 0;
 __attribute__ ((constructor)) static void init_module() {
 
     unsigned int i;
-
-    if (times_loaded > 0)
-        return;
 
     for (i=0; i < num_action_types; ++i) {
         add_action_type(action_table[i].name, action_table[i].func, action_table[i].prototype, action_table[i].pretty_prototype);
@@ -79,11 +75,6 @@ __attribute__ ((constructor)) static void init_module() {
 //Cleans up after this module.
 //The destructor attribute causes this to run at unload (dlclose()) time.
 __attribute__ ((destructor)) static void uninit_module() {
-
-    --times_loaded;
-
-    //if (times_loaded > 0)
-    //    return;
 
     return;
 }
