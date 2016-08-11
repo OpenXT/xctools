@@ -240,6 +240,7 @@ void add_undo_to_rule(struct rule * rule, struct action * action);
 void add_rule(struct rule * rule);
 void delete_rule(struct rule * rule);
 void delete_rules(void);
+void refresh_rule(struct rule * rule);
 
 void delete_condition_from_listeners(struct condition * condition);
 
@@ -257,6 +258,8 @@ struct condition_type * lookup_condition_type(char * type);
 struct action_type * lookup_action_type(char * type);
 struct rule * lookup_rule(char * id);
 struct rule * get_rule_tail();
+
+bool rule_has_var(struct rule * rule, char * var);
 
 struct condition * new_condition_from_string(char *);
 struct action * new_action_from_string(char *);

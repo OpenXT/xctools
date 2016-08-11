@@ -586,6 +586,28 @@ void delete_rules(void) {
 }
 
 
+//Reruns all hooks for this rule.
+void refresh_rule(struct rule * rule) {
+
+    char * parse_error = NULL;
+    char *rule_string, *name, *conditions, *actions, *undos;
+    struct condition *cond;
+    struct action *act;
+
+    if (rule == NULL) {
+        xcpmd_log(LOG_DEBUG, "Couldn't refresh null rule\n");
+        return;
+    }
+
+    //Right now, the only hook is condition on_instantiate().
+    list_for_each_entry(cond, &(rule->conditions.list), list) {
+        if (cond->type->on_instantiate != NULL) {
+            cond->type->on_instantiate(cond);
+        }
+    }
+}
+
+
 //Deletes a condition from an event's list of listeners.
 void delete_condition_from_listeners(struct condition * condition) {
 
@@ -866,6 +888,39 @@ struct rule * get_rule_tail() {
     }
 }
 
+//Checks if a rule has a reference to a particular var.
+bool rule_has_var(struct rule * rule, char * var) {
+
+    struct condition * cond;
+    struct action * act;
+    struct arg_node * arg;
+
+    list_for_each_entry(cond, &rule->conditions.list, list) {
+        list_for_each_entry(arg, &cond->args.list, list) {
+            if (arg->type == ARG_VAR && strcmp(arg->arg.var_name, var) == 0) {
+                return true;
+            }
+        }
+    }
+
+    list_for_each_entry(act, &rule->actions.list, list) {
+        list_for_each_entry(arg, &act->args.list, list) {
+            if (arg->type == ARG_VAR && strcmp(arg->arg.var_name, var) == 0) {
+                return true;
+            }
+        }
+    }
+
+    list_for_each_entry(act, &rule->undos.list, list) {
+        list_for_each_entry(arg, &act->args.list, list) {
+            if (arg->type == ARG_VAR && strcmp(arg->arg.var_name, var) == 0) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 //Allocates memory!
 //Convenience function to create a new condition from a type string.
