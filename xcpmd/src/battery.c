@@ -357,7 +357,7 @@ static void make_xenstore_battery_dir(unsigned int battery_index) {
 
     flag = false;
     for (i = 0; i < num_entries; ++i) {
-        if (!strcmp(dir_entries[i], xenstore_path)) {
+        if ((dir_entries[i] != NULL) && !strcmp(dir_entries[i], xenstore_path)) {
             flag = true;
             break;
         }
