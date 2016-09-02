@@ -589,10 +589,7 @@ void delete_rules(void) {
 //Reruns all hooks for this rule.
 void refresh_rule(struct rule * rule) {
 
-    char * parse_error = NULL;
-    char *rule_string, *name, *conditions, *actions, *undos;
     struct condition *cond;
-    struct action *act;
 
     if (rule == NULL) {
         xcpmd_log(LOG_DEBUG, "Couldn't refresh null rule\n");

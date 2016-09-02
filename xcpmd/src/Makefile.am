@@ -31,6 +31,7 @@ sbin_PROGRAMS = xcpmd
 
 xcpmd_SOURCES = \
 	acpi-events.c \
+	backlight.c \
 	battery.c \
 	db-helper.c \
 	modules.c \
