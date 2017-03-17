@@ -41,8 +41,7 @@ int battery_slot_exists(unsigned int battery_index);
 int battery_is_present(unsigned int battery_index);
 
 void update_batteries(void);
-int update_battery_status(unsigned int battery_index);
-int update_battery_info(unsigned int battery_index);
+int update_battery(unsigned int battery_index);
 void write_battery_status_to_xenstore(unsigned int battery_index);
 void write_battery_info_to_xenstore(unsigned int battery_index);
 
