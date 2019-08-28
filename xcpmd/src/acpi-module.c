@@ -29,6 +29,7 @@
 #include "rules.h"
 #include "acpi-module.h"
 #include "battery.h"
+#include "backlight.h"
 
 /**
  * This module listens for ACPI events from acpid.
@@ -53,6 +54,9 @@ bool battery_present              (struct ev_wrapper * event, struct arg_node * 
 bool overall_battery_greater_than (struct ev_wrapper * event, struct arg_node * args);
 bool overall_battery_less_than    (struct ev_wrapper * event, struct arg_node * args);
 bool overall_battery_equal_to     (struct ev_wrapper * event, struct arg_node * args);
+void set_backlight                (struct arg_node * args);
+void increase_backlight           (struct arg_node * args);
+void decrease_backlight           (struct arg_node * args);
 
 
 //Private data structures
@@ -71,6 +75,13 @@ struct cond_table_row {
     char * pretty_prototype;
     unsigned int event_index;
     void (* on_instantiate)(struct condition *);
+};
+
+struct action_table_row {
+    char * name;
+    void (* func)(struct arg_node *);
+    char * prototype;
+    char * pretty_prototype;
 };
 
 
@@ -110,8 +121,15 @@ static struct cond_table_row condition_data[] = {
     {"whileOverallBattEqualTo"     , overall_battery_equal_to     , "i"    , "int percentage"              , EVENT_BATT_STATUS , NULL }
 };
 
+static struct action_table_row action_table[] = {
+    {"setBacklight"      , set_backlight      , "i" , "int backlight_percent"  } ,
+    {"increaseBacklight" , increase_backlight , "i" , "int percent_to_increase"} ,
+    {"decreaseBacklight" , decrease_backlight , "i" , "int percent_to_decrease"}
+};
+
 static unsigned int num_conditions = sizeof(condition_data) / sizeof(condition_data[0]);
 static unsigned int num_events = sizeof(event_data) / sizeof(event_data[0]);
+static unsigned int num_action_types = sizeof(action_table) / sizeof(action_table[0]);
 
 
 //Public data
@@ -143,6 +161,14 @@ __attribute__((constructor)) static void init_module() {
         struct cond_table_row entry = condition_data[i];
         add_condition_type(entry.name, entry.func, entry.prototype, entry.pretty_prototype, _acpi_event_table[entry.event_index], entry.on_instantiate);
     }
+
+    //Add all action_types to the action list
+    for (i=0; i < num_action_types; ++i) {
+        add_action_type(action_table[i].name, action_table[i].func, action_table[i].prototype, action_table[i].pretty_prototype);
+    }
+
+    //initialize backlight module
+    backlight_init();
 }
 
 
@@ -150,6 +176,8 @@ __attribute__((constructor)) static void init_module() {
 //The destructor attribute causes this to run at unload (dlclose()) time.
 __attribute__((destructor)) static void uninit_module() {
 
+    //cleanup backlight module
+    backlight_destroy();
     //Free event table.
     free(_acpi_event_table);
 }
@@ -269,4 +297,22 @@ bool overall_battery_equal_to(struct ev_wrapper * event, struct arg_node * args)
 
     int percentage = get_arg(args, 0)->arg.i;
     return get_overall_battery_percentage() == percentage;
+}
+
+void set_backlight(struct arg_node * args) {
+
+    struct arg_node * node = get_arg(args, 0);
+    backlight_set(node->arg.i);
+}
+
+void increase_backlight(struct arg_node * args) {
+
+    struct arg_node * node = get_arg(args, 0);
+    backlight_increase(node->arg.i);
+}
+
+void decrease_backlight(struct arg_node * args) {
+
+    struct arg_node * node = get_arg(args, 0);
+    backlight_decrease(node->arg.i);
 }

@@ -56,6 +56,7 @@ PKG_CHECK_MODULES([DBUS_GLIB], [dbus-glib-1])
 PKG_CHECK_MODULES([LIBXCDBUS], [libxcdbus])
 PKG_CHECK_MODULES([LIBXCXENSTORE], [libxcxenstore])
 
+AC_CHECK_LIB([m], [roundf])
 #
 # RPCGen
 #

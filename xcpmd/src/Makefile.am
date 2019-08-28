@@ -24,7 +24,8 @@ noinst_HEADERS = \
 	battery.h \
 	parser.h \
 	db-helper.h \
-	vm-utils.h
+	vm-utils.h \
+	backlight.h
 
 sbin_PROGRAMS = xcpmd
 
