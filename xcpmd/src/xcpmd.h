@@ -36,8 +36,6 @@
 #define UINT_FMT "%x"
 #endif
 
-#define SURFMAN_SERVICE     "com.citrix.xenclient.surfman"
-#define SURFMAN_PATH        "/"
 #define XCPMD_SERVICE       "com.citrix.xenclient.xcpmd"
 #define XCPMD_PATH          "/"
 #define XENMGR_SERVICE      "com.citrix.xenclient.xenmgr"
@@ -45,6 +43,8 @@
 #define XENMGR_PATH         "/"
 #define DB_SERVICE          "com.citrix.xenclient.db"
 #define DB_PATH             "/"
+#define INPUT_SERVICE       "com.citrix.xenclient.input"
+#define INPUT_PATH          "/"
 
 #define PCI_INVALID_VALUE 0xffffffff
 #define EFI_LINE_SIZE     64
