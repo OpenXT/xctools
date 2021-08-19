@@ -272,7 +272,7 @@ static void handle_ac_adapter_event(uint32_t data) {
     struct ev_wrapper * e = acpi_event_table[EVENT_ON_AC];
 
     xenstore_write_int(data, XS_AC_ADAPTER_STATE_PATH);
-    notify_com_citrix_xenclient_xcpmd_ac_adapter_state_changed(xcdbus_conn, XCPMD_SERVICE, XCPMD_PATH);
+    notify_com_citrix_xenclient_xcpmd_ac_adapter_state_changed(xcdbus_conn, XCPMD_SERVICE, XCPMD_PATH, data == ACPI_AC_STATUS_ONLINE);
 
     switch(data) {
         case ACPI_AC_STATUS_OFFLINE:
