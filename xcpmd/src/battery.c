@@ -913,7 +913,7 @@ void update_batteries(void) {
     if ((old_array_size != new_array_size) || (memcmp(old_status, last_status, new_array_size * sizeof(struct battery_status)))) {
         //Here for compatibility--should eventually be removed
         xenstore_write("1", XS_BATTERY_STATUS_CHANGE_EVENT_PATH);
-        notify_com_citrix_xenclient_xcpmd_battery_status_changed(xcdbus_conn, XCPMD_SERVICE, XCPMD_PATH);
+        notify_com_citrix_xenclient_xcpmd_battery_status_changed(xcdbus_conn, XCPMD_SERVICE, XCPMD_PATH, get_overall_battery_percentage());
     }
 
     if (present_batteries_changed) {
