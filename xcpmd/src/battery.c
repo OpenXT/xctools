@@ -531,6 +531,7 @@ int update_battery_status(unsigned int battery_index) {
             memset(data, 0, sizeof(data));
             if (fgets(data, sizeof(data), file) == NULL) {
                 xcpmd_log(LOG_ERR, "Failed to read %s", filename);
+                fclose(file);
                 continue;
             }
 
@@ -613,6 +614,7 @@ int update_battery_info(unsigned int battery_index) {
             memset(data, 0, sizeof(data));
             if (fgets(data, sizeof(data), file) == NULL) {
                 xcpmd_log(LOG_ERR, "Failed to read %s", filename);
+                fclose(file);
                 continue;
             }
 
@@ -1008,6 +1010,7 @@ int get_num_batteries_present(void) {
 
             if (fgets(data, sizeof(data), file) == NULL) {
                 xcpmd_log(LOG_ERR, "Failed to read %s", filename);
+                fclose(file);
                 continue;
             }
 
