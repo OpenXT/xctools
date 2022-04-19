@@ -594,8 +594,7 @@ int acpi_events_initialize(void) {
     }
 
     addr.sun_family = AF_UNIX;
-    strncpy(addr.sun_path, ACPID_SOCKET_PATH, strlen(ACPID_SOCKET_PATH));
-    addr.sun_path[strlen(ACPID_SOCKET_PATH)] = '\0';
+    strncpy(addr.sun_path, ACPID_SOCKET_PATH, strlen(ACPID_SOCKET_PATH) + 1);
 
     for (i = 0; ; i++) {
         ret = connect(acpi_events_fd, (struct sockaddr *)&addr, sizeof(addr));
