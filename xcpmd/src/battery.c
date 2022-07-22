@@ -532,7 +532,12 @@ int update_battery_status(unsigned int battery_index) {
 
             memset(data, 0, sizeof(data));
             if (fgets(data, sizeof(data), file) == NULL) {
-                xcpmd_log(LOG_ERR, "Failed to read %s", filename);
+                if (errno != ENODEV) {
+                    // ACPI batteries can return ENODEV for current_now.
+                    // skip that so we don't spam the log.
+                    xcpmd_log(LOG_ERR, "Failed to read %s errno %d", filename,
+                              errno);
+                }
                 fclose(file);
                 continue;
             }
