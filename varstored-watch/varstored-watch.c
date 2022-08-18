@@ -26,12 +26,27 @@ start_varstored(char *domid_str, char *uuid)
     char *vpid = NULL;
     char *uuid_param = NULL;
     domid_t domid;
+    int ret;
 
     domid = (domid_t) strtol(domid_str, NULL, 0);
 
-    asprintf(&process_name, "varstored-%d", domid);
-    asprintf(&vpid, "/var/run/varstored-pid-%d", domid);
-    asprintf(&uuid_param, "uuid:%s", uuid);
+    ret = asprintf(&process_name, "varstored-%d", domid);
+    if (ret == -1) {
+        syslog(LOG_ERR, "asprintf process_name failed: %d, %s", errno,
+               strerror(errno));
+        return -1;
+    }
+    ret = asprintf(&vpid, "/var/run/varstored-pid-%d", domid);
+    if (ret == -1) {
+        syslog(LOG_ERR, "asprintf pidfile failed: %d, %s", errno,
+               strerror(errno));
+        return -1;
+    }
+    ret = asprintf(&uuid_param, "uuid:%s", uuid);
+    if (ret == -1) {
+        syslog(LOG_ERR, "asprintf uuid failed: %d, %s", errno, strerror(errno));
+        return -1;
+    }
 
     pid = fork();
     if (pid == -1) {
@@ -146,6 +161,10 @@ main(int argc, char **argv)
 
     //Start varstored for the first time.
     varstored_pid = start_varstored(domid_str, uuid);
+    if (varstored_pid == -1) {
+        syslog(LOG_ERR, "Failed to fork varstored\n");
+        return -1;
+    }
 
     //Start loop for restarting varstored if it goes down.
     while (true) {
