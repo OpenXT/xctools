@@ -154,7 +154,7 @@ static void handle_battery_status_event(int battery_index) {
 */
 
 
-static void handle_lid_event(int status) {
+void handle_lid_event(int status) {
 
     int lid_status;
     char * lid_status_string;
@@ -460,20 +460,7 @@ static void process_acpi_message(char *acpi_buffer, ssize_t len) {
             return;
         }
 
-        if (!strcmp(subclass, ACPI_BUTTON_SUBCLASS_LID)) {
-
-            if (tokens[2] == NULL)
-                data = LID_UNKNOWN;
-            else if (!strcmp(tokens[2], "open"))
-                data = LID_OPEN;
-            else if (!strcmp(tokens[2], "close"))
-                data = LID_CLOSED;
-            else
-                data = LID_UNKNOWN;
-
-            handle_lid_event(data);
-        }
-        else if (!strcmp(subclass, ACPI_BUTTON_SUBCLASS_POWER)) {
+        if (!strcmp(subclass, ACPI_BUTTON_SUBCLASS_POWER)) {
             handle_power_button_event();
         }
         else if (!strcmp(subclass, ACPI_BUTTON_SUBCLASS_SLEEP)) {

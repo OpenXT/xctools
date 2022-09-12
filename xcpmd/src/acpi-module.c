@@ -30,6 +30,8 @@
 #include "acpi-module.h"
 #include "battery.h"
 #include "backlight.h"
+#include "vm-utils.h"
+#include "acpi-events.h"
 
 /**
  * This module listens for ACPI events from acpid.
@@ -57,6 +59,7 @@ bool overall_battery_equal_to     (struct ev_wrapper * event, struct arg_node * 
 void set_backlight                (struct arg_node * args);
 void increase_backlight           (struct arg_node * args);
 void decrease_backlight           (struct arg_node * args);
+static DBusHandlerResult lid_event_handler(DBusConnection * connection, DBusMessage * dbus_message, void * user_data);
 
 
 //Private data structures
@@ -169,6 +172,7 @@ __attribute__((constructor)) static void init_module() {
 
     //initialize backlight module
     backlight_init();
+    add_dbus_filter("type='signal',interface='com.citrix.xenclient.input',member='lid_state_changed'", lid_event_handler, NULL, NULL);
 }
 
 
@@ -180,6 +184,7 @@ __attribute__((destructor)) static void uninit_module() {
     backlight_destroy();
     //Free event table.
     free(_acpi_event_table);
+    remove_dbus_filter("type='signal',interface='com.citrix.xenclient.input',member='lid_state_changed'", lid_event_handler, NULL);
 }
 
 
@@ -236,6 +241,42 @@ bool lid_open(struct ev_wrapper * event, struct arg_node * args) {
 bool lid_closed(struct ev_wrapper * event, struct arg_node * args) {
 
     return event->value.i == LID_CLOSED;
+}
+
+
+/* 
+ * lid_event_handler handles lid_state_changed signals when they are received
+ * over dbus. The lid_state_changed signal is emitted from vglass after libinput
+ * detects SW_LID and EV_SW. The signal includes one boolean argument 
+ * indicating whether the lid was opened or closed. The argument is retrieved 
+ * from the dbus signal, and passed along to the handle_lid_event function, 
+ * which will then update xenstore accordingly. 
+ *
+ * The passed argument will include either a boolean true (1) to indicate
+ * a closed lid or false (0) to indicate an open lid. These values come from
+ * LIBINPUT_SWITCH_STATE_ON/OFF and match the enum values of LID_STATE located
+ * in xcpmd.h. This matters because handle_lid_event checks the value passed to
+ * it against that enum, and then sets xenstore based on that value.
+ */
+DBusHandlerResult lid_event_handler(DBusConnection * connection, DBusMessage * dbus_message, void * user_data) {
+
+    DBusError error;
+    bool lid_status;
+    DBusHandlerResult ret = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
+
+    if (dbus_message_is_signal(dbus_message, "com.citrix.xenclient.input", "lid_state_changed")) {
+
+        dbus_error_init(&error);
+        if (!dbus_message_get_args(dbus_message, &error, DBUS_TYPE_BOOLEAN, &lid_status, DBUS_TYPE_INVALID)) {
+            xcpmd_log(LOG_ERR, "dbus_message_get_args() failed: %s (%s).\n", error.name, error.message);
+        }
+        dbus_error_free(&error);
+
+        handle_lid_event(lid_status);
+        ret = DBUS_HANDLER_RESULT_HANDLED;
+    }
+
+    return ret;
 }
 
 
