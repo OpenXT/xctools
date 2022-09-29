@@ -491,6 +491,8 @@ int update_battery_status(unsigned int battery_index) {
     char *ptr;
 
     struct battery_status status;
+    struct battery_info info;
+    memset(&info, 0, sizeof(struct battery_info));
     memset(&status, 0, sizeof(struct battery_status));
 
     if (battery_index >= num_battery_structs_allocd)
@@ -530,7 +532,13 @@ int update_battery_status(unsigned int battery_index) {
 
             memset(data, 0, sizeof(data));
             if (fgets(data, sizeof(data), file) == NULL) {
-                xcpmd_log(LOG_ERR, "Failed to read %s", filename);
+                if (errno != ENODEV) {
+                    // ACPI batteries can return ENODEV for current_now.
+                    // skip that so we don't spam the log.
+                    xcpmd_log(LOG_ERR, "Failed to read %s errno %d", filename,
+                              errno);
+                }
+                fclose(file);
                 continue;
             }
 
@@ -543,6 +551,9 @@ int update_battery_status(unsigned int battery_index) {
 
             //Set the attribute represented by this file.
             set_battery_status_attribute(dp->d_name, ptr, &status);
+
+            //Set the attribute represented by this file.
+            set_battery_info_attribute(dp->d_name, ptr, &info);
         }
     }
 
@@ -566,68 +577,6 @@ int update_battery_status(unsigned int battery_index) {
 #ifdef XCPMD_DEBUG
     print_battery_status(battery_index);
 #endif
-    return 1;
-}
-
-
-//Gets a battery's info from the sysfs and stores it in last_info.
-int update_battery_info(unsigned int battery_index) {
-
-    DIR *battery_dir;
-    struct dirent * dp;
-    FILE *file;
-    char filename[295];
-    char data[128];
-    char *ptr;
-
-    struct battery_info info;
-    memset(&info, 0, sizeof(struct battery_info));
-
-    if (battery_index >= num_battery_structs_allocd)
-        return 0;
-
-    if (battery_slot_exists(battery_index) == NO) {
-        memcpy(&last_info[battery_index], &info, sizeof(struct battery_info));
-        return 0;
-    }
-
-    battery_dir = get_battery_dir(battery_index);
-    if (!battery_dir) {
-        xcpmd_log(LOG_ERR, "opendir in update_battery_info() for directory %s/BAT%d failed with error %d\n", BATTERY_DIR_PATH, battery_index, errno);
-        return 0;
-    }
-
-    //Loop over the files in the directory.
-    while ((dp = readdir(battery_dir)) != NULL) {
-
-        //Convert from dirent to file and read out the data.
-        if (dp->d_type == DT_REG) {
-
-            memset(filename, 0, sizeof(filename));
-            snprintf(filename, sizeof (filename), "%s/BAT%u/%s", BATTERY_DIR_PATH, battery_index, dp->d_name);
-
-            file = fopen(filename, "r");
-            if (file == NULL)
-                continue;
-
-            memset(data, 0, sizeof(data));
-            if (fgets(data, sizeof(data), file) == NULL) {
-                xcpmd_log(LOG_ERR, "Failed to read %s", filename);
-                continue;
-            }
-
-            fclose(file);
-
-            //Trim off leading spaces.
-            ptr = data;
-            while(*ptr == ' ')
-                ptr += sizeof(char);
-
-            //Set the attribute represented by this file.
-            set_battery_info_attribute(dp->d_name, ptr, &info);
-
-        }
-    }
 
     //In sysfs, the charge nodes are for batteries reporting in mA and
     //the energy nodes are for mW.
@@ -836,7 +785,6 @@ void update_batteries(void) {
     //calculations of aggregate data (e.g., warning level).
     for (i=0; i < num_batteries_to_update; ++i) {
         update_battery_status(i);
-        update_battery_info(i);
     }
 
     //Write back to the xenstore and only send notifications if things have changed.
@@ -1008,6 +956,7 @@ int get_num_batteries_present(void) {
 
             if (fgets(data, sizeof(data), file) == NULL) {
                 xcpmd_log(LOG_ERR, "Failed to read %s", filename);
+                fclose(file);
                 continue;
             }
 
