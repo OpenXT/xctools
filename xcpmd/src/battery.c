@@ -572,7 +572,6 @@ int update_battery_status(unsigned int battery_index) {
         status.remaining_capacity = status.energy_now;
     }
 
-    closedir(battery_dir);
     memcpy(&last_status[battery_index], &status, sizeof(struct battery_status));
 #ifdef XCPMD_DEBUG
     print_battery_status(battery_index);
