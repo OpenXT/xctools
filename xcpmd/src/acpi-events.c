@@ -630,8 +630,9 @@ int acpi_events_initialize(void) {
     //notifications before data is ready on a hardware level. If a quirk is added
     //to the battery driver for these platforms, we can move to an event-driven
     //model.
-    event_set(&refresh_battery_event, -1, EV_TIMEOUT | EV_PERSIST, wrapper_refresh_battery_event, NULL);
-    wrapper_refresh_battery_event(0, 0, NULL);
+    event_set(&refresh_battery_event, -1, EV_TIMEOUT | EV_PERSIST, wrapper_refresh_battery_event,
+			  acpi_event_table);
+    wrapper_refresh_battery_event(0, 0, acpi_event_table);
 
     //State must be initialized after acpi-module is loaded--call it from main().
 
@@ -666,4 +667,3 @@ void handle_battery_events(void) {
         handle_events(status_e);
     }
 }
-

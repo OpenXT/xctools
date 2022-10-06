@@ -29,6 +29,7 @@
 #include "xcpmd.h"
 #include "battery.h"
 #include "modules.h"
+#include "acpi-module.h"
 #include <stdlib.h>
 
 
@@ -1022,9 +1023,15 @@ int battery_slot_exists(unsigned int battery_index) {
 void wrapper_refresh_battery_event(int fd, short event, void *opaque) {
 
     struct timeval tv;
+    struct ev_wrapper **acpi_event_table = (struct ev_wrapper **)opaque;
+    struct ev_wrapper *info_e = acpi_event_table[EVENT_BATT_INFO];
+    struct ev_wrapper *status_e = acpi_event_table[EVENT_BATT_STATUS];
+
     memset(&tv, 0, sizeof(tv));
 
     update_batteries();
+    handle_events(info_e);
+    handle_events(status_e);
 
     tv.tv_sec = 4;
     evtimer_add(&refresh_battery_event, &tv);
