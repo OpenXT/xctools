@@ -79,6 +79,7 @@ rpcgen/%_server_marshall.h rpcgen/%_server_obj.h rpcgen/%_server_obj.c: $(IDLDIR
 #
 pkglib_LTLIBRARIES = \
 	acpi-module.la \
+	db-events-module.la \
 	default-actions-module.la \
 	default-inputs-module.la \
 	displayhandler-module.la \
@@ -140,3 +141,13 @@ vm_events_module_la_SOURCES = \
 	vm-utils.h \
 	xcpmd.h
 vm_events_module_la_LDFLAGS = -avoid-version -module -shared
+
+db_events_module_la_SOURCES = \
+	db-events-module.c \
+	project.h \
+	xcpmd.h \
+	modules.h \
+	rules.h \
+	db-events-module.h \
+	db-helper.h
+db_events_module_la_LDFLAGS = -avoid-version -module -shared

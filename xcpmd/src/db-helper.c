@@ -27,7 +27,9 @@
 #include "rpcgen/db_client.h"
 #include "project.h"
 #include "xcpmd.h"
+#include "modules.h"
 #include "db-helper.h"
+#include "db-events-module.h"
 
 /**
  * This file contains functions for reading from and writing to the DB, both
@@ -52,6 +54,8 @@
  * Functions for touching the variable cache are defined here, but its global
  * variable, db_vars, is set up and torn down in rules.c.
  */
+
+static struct ev_wrapper ** db_event_table = NULL;
 
 //Function prototypes
 static void db_write(char * path, char * value);
@@ -213,7 +217,21 @@ bool parse_db_vars(struct parse_data * parse_data) {
         xcpmd_log(LOG_WARNING, "Couldn't get variables from DB.");
         return false;
     }
+    xcpmd_log(LOG_DEBUG, "Received json: %s", json);
+
+    //There are no vars in the DB.
+    if (*json == '\0' || !strncmp(json, "null", 4)) {
+        xcpmd_log(LOG_DEBUG, "DB vars node is empty\n");
+        free(json);
+        return true;
+    }
+
     yajl = yajl_tree_parse(json, err, sizeof(err));
+    if (yajl == NULL) {
+        xcpmd_log(LOG_WARNING, "Error parsing DB vars: %s", err);
+        free(json);
+        return false;
+    }
 
     if (YAJL_IS_OBJECT(yajl)) {
 
@@ -332,11 +350,13 @@ bool parse_db_rules(struct parse_data * data) {
             continue;
         }
         rule_arr = json_rule_to_parseable(rule_name, json_rule);
+        xcpmd_log(LOG_DEBUG, "JSON to parse: %s", json_rule);
         free(json_rule);
         if (rule_arr == NULL) {
             xcpmd_log(LOG_WARNING, "Error parsing DB rule - rule %d is malformed", i);
             continue;
         }
+        xcpmd_log(LOG_DEBUG, "Parsed rule: %s | %s | %s | %s", rule_arr[0], rule_arr[1], rule_arr[2], rule_arr[3]);
         name = rule_arr[0];
         conditions = rule_arr[1];
         actions = rule_arr[2];
@@ -369,6 +389,7 @@ static char ** json_rule_to_parseable(char * name, char * json) {
     int i, j, num_entries, num_args;
     char *str = NULL;
     char err[1024];
+    char buf[16];
     yajl_val yajl, yconditions, yactions, yundos;
     yajl_val ycond, yact, yundo;
     yajl_val yinverted, ytype, yargs, yarg;
@@ -479,7 +500,10 @@ static char ** json_rule_to_parseable(char * name, char * json) {
             num_args = yargs->u.object.len;
             for (j = 0; j < num_args; ++j) {
 
-                yarg = yargs->u.object.values[j];
+                //yarg = yargs->u.object.values[j];
+                snprintf(buf, 16, "%u", j);
+                yajl_path[0] = buf;
+                yarg = yajl_tree_get(yargs, yajl_path, yajl_t_any);
 
                 if (!YAJL_IS_STRING(yarg)) {
                     xcpmd_log(LOG_WARNING, "Error parsing JSON: empty arg in condition %s in rule %s.\n", YAJL_GET_STRING(ytype), name);
@@ -543,7 +567,10 @@ static char ** json_rule_to_parseable(char * name, char * json) {
             num_args = yargs->u.object.len;
             for (j = 0; j < num_args; ++j) {
 
-                yarg = yargs->u.object.values[j];
+                //yarg = yargs->u.object.values[j];
+                snprintf(buf, 16, "%u", j);
+                yajl_path[0] = buf;
+                yarg = yajl_tree_get(yargs, yajl_path, yajl_t_any);
 
                 if (!YAJL_IS_STRING(yarg)) {
                     xcpmd_log(LOG_WARNING, "Error parsing JSON: empty arg in action %s in rule %s.\n", YAJL_GET_STRING(ytype), name);
@@ -608,7 +635,10 @@ static char ** json_rule_to_parseable(char * name, char * json) {
                 num_args = yargs->u.object.len;
                 for (j = 0; j < num_args; ++j) {
 
-                    yarg = yargs->u.object.values[j];
+                    //yarg = yargs->u.object.values[j];
+                    snprintf(buf, 16, "%u", j);
+                    yajl_path[0] = buf;
+                    yarg = yajl_tree_get(yargs, yajl_path, yajl_t_any);
 
                     if (!YAJL_IS_STRING(yarg)) {
                         xcpmd_log(LOG_WARNING, "Error parsing JSON: empty arg in undo %s in rule %s.\n", YAJL_GET_STRING(ytype), name);
@@ -836,6 +866,13 @@ static char * rule_to_json(struct rule * rule) {
 struct db_var * add_var(char * name, enum arg_type type, union arg_u value, char ** parse_error) {
 
     struct db_var * var = lookup_var(name);
+    struct rule *rule;
+    struct ev_wrapper * e;
+
+    //Try to get the event table.
+    if (db_event_table == NULL) {
+        db_event_table = get_event_table(DB_EVENTS, MODULE_PATH DB_EVENTS_MODULE_SONAME);
+    }
 
     //A var with this name exists already. Check the type.
     if (var != NULL) {
@@ -864,7 +901,26 @@ struct db_var * add_var(char * name, enum arg_type type, union arg_u value, char
     }
 
     if (var != NULL) {
+        xcpmd_log(LOG_DEBUG, "Writing db var!");
         write_db_var(var->name, var->value.type, var->value.arg);
+
+        if (db_event_table != NULL) {
+            e = db_event_table[EVENT_VAR_WRITTEN];
+            e->value.str = var->name;
+            handle_events(e);
+            e->value.str = "";
+
+            e = db_event_table[EVENT_VAR_WRITTEN_EDGE];
+            e->value.str = var->name;
+            handle_events(e);
+            e->value.str = "";
+        }
+
+        list_for_each_entry(rule, &rules.list, list) {
+            if (rule_has_var(rule, var->name)) {
+                refresh_rule(rule);
+            }
+        }
     }
 
     return var;
