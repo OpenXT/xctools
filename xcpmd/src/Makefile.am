@@ -56,6 +56,9 @@ xcpmd_LDADD = \
 	$(LIBXCXENSTORE_LIBS)
 xcpmd_LDFLAGS = -rdynamic
 
+xcpmddir = $(datadir)/xcpmd
+xcpmd_DATA = default.rules
+
 #
 # RPC generated stubs.
 #
