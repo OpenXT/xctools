@@ -24,12 +24,14 @@ noinst_HEADERS = \
 	battery.h \
 	parser.h \
 	db-helper.h \
-	vm-utils.h
+	vm-utils.h \
+	backlight.h
 
 sbin_PROGRAMS = xcpmd
 
 xcpmd_SOURCES = \
 	acpi-events.c \
+	backlight.c \
 	battery.c \
 	db-helper.c \
 	modules.c \
@@ -57,7 +59,7 @@ xcpmd_LDFLAGS = -rdynamic
 #
 # RPC generated stubs.
 #
-DBUS_CLIENT_IDLS = xenmgr xenmgr_vm db vglass input_daemon
+DBUS_CLIENT_IDLS = xenmgr xenmgr_vm xenmgr_host db vglass input_daemon
 DBUS_SERVER_IDLS = xcpmd
 
 BUILT_SOURCES = \
@@ -79,9 +81,11 @@ rpcgen/%_server_marshall.h rpcgen/%_server_obj.h rpcgen/%_server_obj.c: $(IDLDIR
 #
 pkglib_LTLIBRARIES = \
 	acpi-module.la \
+	db-events-module.la \
 	default-actions-module.la \
 	default-inputs-module.la \
 	displayhandler-module.la \
+	host-power-module.la \
 	idle-detect-module.la \
 	vm-actions-module.la \
 	vm-events-module.la
@@ -140,3 +144,21 @@ vm_events_module_la_SOURCES = \
 	vm-utils.h \
 	xcpmd.h
 vm_events_module_la_LDFLAGS = -avoid-version -module -shared
+
+host_power_module_la_SOURCES = \
+	host-power-module.c \
+	project.h \
+	xcpmd.h \
+	rules.h \
+	vm-utils.h
+host_power_module_la_LDFLAGS = -avoid-version -module -shared
+
+db_events_module_la_SOURCES = \
+	db-events-module.c \
+	project.h \
+	xcpmd.h \
+	modules.h \
+	rules.h \
+	db-events-module.h \
+	db-helper.h
+db_events_module_la_LDFLAGS = -avoid-version -module -shared

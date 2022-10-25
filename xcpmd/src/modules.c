@@ -45,8 +45,10 @@
 //Private data
 static char * _module_list[] = {
     MODULE_PATH "acpi-module.so",
+    MODULE_PATH "db-events-module.so",
     MODULE_PATH "default-actions-module.so",
     MODULE_PATH "displayhandler-module.so",
+    MODULE_PATH "host-power-module.so",
     MODULE_PATH "idle-detect-module.so",
     MODULE_PATH "vm-actions-module.so",
     MODULE_PATH "vm-events-module.so",
@@ -161,7 +163,7 @@ void handle_events(struct ev_wrapper * event) {
     list_for_each_entry(node, &(event->listeners.list), list) {
         condition = node->condition;
         condition_was_true = condition->is_true;
-        condition_is_true = condition->type->check(event, &condition->args);
+        condition_is_true = (condition->type->check(event, &condition->args) != condition->is_inverted); //logical XOR
 
         //If this condition has changed, add its rule to a rundown list.
         if (condition_was_true != condition_is_true) {
@@ -315,8 +317,10 @@ void evaluate_policy(void) {
     //Then perform their actions.
     list_for_each_entry(rule, &rules.list, list) {
         if (evaluate_rule(rule) == true) {
+            if (!rule->is_active) {
+                do_actions(rule);
+            }
             rule->is_active = true;
-            do_actions(rule);
         }
     }
 }

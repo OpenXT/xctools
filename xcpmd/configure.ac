@@ -40,6 +40,8 @@ LT_INIT
 # Check for libraries
 AC_SEARCH_LIBS([dlopen], [dl])
 AC_SEARCH_LIBS([yajl_tree_parse], [yajl])
+AC_SEARCH_LIBS([round], [m])
+AC_SEARCH_LIBS([udev_new], [udev])
 
 # Required modules.
 PKG_CHECK_MODULES([LIBPCI], [libpci])

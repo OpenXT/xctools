@@ -20,7 +20,6 @@
 
 /* acpi-events.c */
 int xcpmd_process_input(int input_value);
-void adjust_brightness(int increase, int force);
 int get_ac_adapter_status(void);
 int get_lid_status(void);
 int acpi_events_initialize(void);

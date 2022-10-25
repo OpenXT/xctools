@@ -1,11 +1,22 @@
-# This file contains a default set of rules for XCPMD that will be loaded 
-# when no rules or vars exist in the DB. Customize for your use case.
+# Default set of rules for XCPMD. These are only loaded when no rules or vars
+# exist in the DB.
 
 # Variable section
-#samplevar(10)
-
-# Section separator
+critical_batt(11)
+normal_batt(10)
+critical_backlight(60)
+batt_dim_backlight(70)
+ac_dim_backlight(100)
+shutdown_on_idle(0)
+shutdown_idle(15)
 =
 
 # Rules section
-#samplerule | sampleCondition() | sampleAction($sampleVar) | sampleUndo($sampleVar)
+battBacklight | whileUsingBatt() whileOverallBattGreaterThan($normal_batt) | setBacklight($batt_dim_backlight)
+lidScreenOff | whileLidClosed() | screenOff()
+lidScreenOn | whileLidOpen() | screenOn()
+acBacklight | whileUsingAc() | setBacklight($ac_dim_backlight)
+darShutdown | intEqualTo($shutdown_on_idle 1) whenDarIdleTimeout($shutdown_idle) | logString("DAR idle timeout expired; shutting down...") shutdownHostIdle()
+dimScreenCritical | whileUsingBatt() whileOverallBattLessThan($critical_batt) | setBacklight($critical_backlight)
+battBacklightChanged | whileUsingBatt() whenVarWritten("batt_dim_backlight") | setBacklight($batt_dim_backlight)
+acBacklightChanged | whileUsingAc() whenVarWritten("ac_dim_backlight") | setBacklight($ac_dim_backlight)

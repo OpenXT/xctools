@@ -130,4 +130,6 @@
 #define ACPI_VIDEO_SUBCLASS_BRTCYCLE    "brightnesscycle"
 #define ACPI_VIDEO_SUBCLASS_TABLETMODE  "tabletmode"
 
+void handle_lid_event(int status);
+
 #endif
