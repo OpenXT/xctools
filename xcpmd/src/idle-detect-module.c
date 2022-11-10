@@ -163,6 +163,7 @@ struct timer * add_timer_to_list(char * name, int timeout) {
 
     new_timer->set = false;
     new_timer->timeout = timeout;
+    event_set(&new_timer->set_event, -1, EV_TIMEOUT, set_timer, new_timer);
     list_add(&new_timer->list, &timer_list.list);
 
     return new_timer;
@@ -208,7 +209,6 @@ void dar_idle_instantiate(struct condition * condition) {
 
     //Does this timer still need to tell the input server?
     if (timer->set == false) {
-        event_set(&timer->set_event, -1, EV_TIMEOUT | EV_PERSIST, set_timer, timer);
         set_timer(0, 0, timer);
     }
 }
@@ -230,12 +230,10 @@ void set_timer(int fd, short event, void *opaque) {
     if (timer->timeout == 0) {
         xcpmd_log(LOG_DEBUG, "Timer %s has a timeout of zero; not setting.\n", timer->name);
         timer->set = true;
-        evtimer_del(&timer->set_event);
     }
     else if (com_citrix_xenclient_input_update_idle_timer_(xcdbus_conn, INPUT_SERVICE, INPUT_PATH, timer->name, timer->timeout * 60)) {
         xcpmd_log(LOG_DEBUG, "Updating timer %s with timeout %i.\n", timer->name, timer->timeout * 60);
         timer->set = true;
-        evtimer_del(&timer->set_event);
     }
     else {
         xcpmd_log(LOG_DEBUG, "Updating timer %s failed; retrying...\n", timer->name);
